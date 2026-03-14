@@ -1,39 +1,47 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import API from '../api/axios';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import API from "../api/axios";
 
 // 1. Login Action
-export const loginUser = createAsyncThunk('auth/login', async (userData: any, { rejectWithValue }) => {
-  try {
-    const response = await API.post('/users/login', userData);
-    // User info (name, email, isAdmin) UI ke liye save kar rahe hain
-    localStorage.setItem('userInfo', JSON.stringify(response.data));
-    return response.data;
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || 'Login failed');
-  }
-});
+export const loginUser = createAsyncThunk(
+  "auth/login",
+  async (userData: any, { rejectWithValue }) => {
+    try {
+      const response = await API.post("/users/login", userData);
+      // User info (name, email, isAdmin) UI ke liye save kar rahe hain
+      localStorage.setItem("userInfo", JSON.stringify(response.data));
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || "Login failed");
+    }
+  },
+);
 
 // 2. Logout Action (Ab ye backend cookie ko bhi uraye ga)
-export const logoutUser = createAsyncThunk('auth/logout', async (_, { rejectWithValue }) => {
-  try {
-    await API.post('/users/logout'); 
-    localStorage.removeItem('userInfo');
-  } catch (error: any) {
-    return rejectWithValue('Logout failed');
-  }
-});
+export const logoutUser = createAsyncThunk(
+  "auth/logout",
+  async (_, { rejectWithValue }) => {
+    try {
+      await API.post("/users/logout");
+      localStorage.removeItem("userInfo");
+    } catch (error: any) {
+      return rejectWithValue("Logout failed");
+    }
+  },
+);
 
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState: {
-    userInfo: localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')!) : null,
+    userInfo: localStorage.getItem("userInfo")
+      ? JSON.parse(localStorage.getItem("userInfo")!)
+      : null,
     loading: false,
     error: null as string | null,
   },
   reducers: {
     clearError: (state) => {
       state.error = null;
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
