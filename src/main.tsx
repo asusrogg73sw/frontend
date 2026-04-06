@@ -10,6 +10,7 @@ import App from "./App.tsx";
 import HomePage from "./pages/HomePage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
+import ProductListPage from "./pages/ProductListPage.tsx";
 
 // Router setup
 const router = createBrowserRouter([
@@ -29,6 +30,10 @@ const router = createBrowserRouter([
       {
         path: "/login",
         element: <LoginPage />,
+      },
+      {
+        path: "/products",
+        element: <ProductListPage />,
       },
     ],
   },
