@@ -1,13 +1,26 @@
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { listProducts } from "../store/productSlice";
+import { listProducts, deleteProduct } from "../store/productSlice";
 import { Edit, Trash2, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const ProductListPage = () => {
+  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { products, loading, error } = useAppSelector(
     (state) => state.products,
   );
+
+  const deleteHandler = async (id: string) => {
+    if (window.confirm("Bhai, pakka delete karna hai?")) {
+      try {
+        await dispatch(deleteProduct(id)).unwrap();
+        // Agar yahan tak code pohancha, matlab delete success hai!
+      } catch (err) {
+        alert("Delete nahi ho saka: " + err);
+      }
+    }
+  };
 
   useEffect(() => {
     dispatch(listProducts());
@@ -17,7 +30,10 @@ const ProductListPage = () => {
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800">Products Inventory</h2>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition">
+        <button
+          onClick={() => navigate("/products/add")}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition"
+        >
           <Plus size={18} /> Add Product
         </button>
       </div>
@@ -69,7 +85,10 @@ const ProductListPage = () => {
                       <button className="text-blue-500 hover:text-blue-700">
                         <Edit size={18} />
                       </button>
-                      <button className="text-red-500 hover:text-red-700">
+                      <button
+                        onClick={() => deleteHandler(product._id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
                         <Trash2 size={18} />
                       </button>
                     </td>
