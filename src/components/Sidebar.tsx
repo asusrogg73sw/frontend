@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { LayoutDashboard, ShoppingBag, Users, LogOut } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Users, LogOut, ShoppingBagIcon } from "lucide-react";
 import { useAppDispatch } from "../store/hooks";
 import { logoutUser } from "../store/authSlice";
 
@@ -37,6 +37,14 @@ const Sidebar = () => {
         >
           <Users size={20} />
           <span>Users</span>
+        </Link>
+        <Link
+          to="/orders"
+          className="flex items-center space-x-3 p-3 hover:bg-gray-800 rounded-lg transition"
+        >
+          
+          <ShoppingBagIcon size={20} />
+          <span>Orders</span>
         </Link>
       </nav>
 

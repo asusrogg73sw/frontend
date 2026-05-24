@@ -3,16 +3,23 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { Provider } from "react-redux"; // Redux provider import
-import { store } from "./store"; // Redux store import
+import { Provider } from "react-redux";
+
+import { store } from "./store";
+
 import "./index.css";
+
 import App from "./App.tsx";
+
 import HomePage from "./pages/HomePage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
-import ProtectedRoute from "./components/ProtectedRoute.tsx";
 import ProductListPage from "./pages/ProductListPage.tsx";
 import AddProductPage from "./pages/AddProductPage.tsx";
 import EditProductPage from "./pages/EditProductPage.tsx";
+import OrderListPage from "./pages/OrderListPage.tsx";
+
+import ProtectedRoute from "./components/ProtectedRoute.tsx";
+import AdminRoute from "./components/AdminRoute";
 
 // Router setup
 const router = createBrowserRouter([
@@ -20,6 +27,24 @@ const router = createBrowserRouter([
     path: "/",
     element: <App />,
     children: [
+      // =====================================================
+      // Public Routes
+      // =====================================================
+
+      {
+        path: "/login",
+        element: <LoginPage />,
+      },
+
+      {
+        path: "/products",
+        element: <ProductListPage />,
+      },
+
+      // =====================================================
+      // Protected Routes (Logged-in Users)
+      // =====================================================
+
       {
         element: <ProtectedRoute />,
         children: [
@@ -27,26 +52,37 @@ const router = createBrowserRouter([
             path: "/",
             element: <HomePage />,
           },
+
+          {
+            path: "/orders",
+            element: <OrderListPage />,
+          },
         ],
       },
+
+      // =====================================================
+      // Admin Routes
+      // =====================================================
+
       {
-        path: "/login",
-        element: <LoginPage />,
+        element: <AdminRoute />,
+        children: [
+          {
+            path: "/products/add",
+            element: <AddProductPage />,
+          },
+
+          {
+            path: "/products/edit/:id",
+            element: <EditProductPage />,
+          },
+        ],
       },
-      {
-        path: "/products",
-        element: <ProductListPage />,
-      },
-      {
-        path: "/products/add",
-        element: <AddProductPage />,
-      },
-      { path: "/products/edit/:id", element: <EditProductPage /> },
     ],
   },
 ]);
 
-// Rendering the app with Redux Provider wrapping RouterProvider
+// Render App
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Provider store={store}>

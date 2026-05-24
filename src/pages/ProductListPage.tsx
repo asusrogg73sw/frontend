@@ -1,8 +1,9 @@
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Edit, Trash2, Plus } from "lucide-react";
+
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { listProducts, deleteProduct } from "../store/productSlice";
-import { Edit, Trash2, Plus } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 const ProductListPage = () => {
   // React Router navigation hook
@@ -11,32 +12,31 @@ const ProductListPage = () => {
   // Redux dispatch
   const dispatch = useAppDispatch();
 
-  // Redux state se products data le rahe hain
+  // Products state
   const { products, loading, error } = useAppSelector(
     (state) => state.products,
   );
+
+  // Auth state
+  const { userInfo } = useAppSelector((state) => state.auth);
 
   /* =========================================================
      Delete Product Handler
      ========================================================= */
   const deleteHandler = async (id: string) => {
-    // Delete se pehle confirmation
     if (window.confirm("Bhai, pakka delete karna hai?")) {
       try {
-        // Product delete action dispatch
         await dispatch(deleteProduct(id)).unwrap();
 
-        // Success case
         alert("Product successfully delete ho gaya!");
       } catch (err) {
-        // Error case
         alert("Delete nahi ho saka: " + err);
       }
     }
   };
 
   /* =========================================================
-     Component Load Hone Par Products Fetch Karna
+     Fetch Products On Component Load
      ========================================================= */
   useEffect(() => {
     dispatch(listProducts());
@@ -48,16 +48,20 @@ const ProductListPage = () => {
           Header Section
           ===================================================== */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Products Inventory</h2>
+        <h2 className="text-2xl font-bold text-gray-800">
+          Products Inventory
+        </h2>
 
-        {/* Add Product Button */}
-        <button
-          onClick={() => navigate("/products/add")}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition"
-        >
-          <Plus size={18} />
-          Add Product
-        </button>
+        {/* Add Product Button - Admin Only */}
+        {userInfo?.isAdmin && (
+          <button
+            onClick={() => navigate("/products/add")}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition"
+          >
+            <Plus size={18} />
+            Add Product
+          </button>
+        )}
       </div>
 
       {/* =====================================================
@@ -65,15 +69,15 @@ const ProductListPage = () => {
           ===================================================== */}
       {loading ? (
         <p>Loading products...</p>
-      ) : /* =====================================================
-          Error State
-          ===================================================== */
-      error ? (
+      ) : error ? (
+        /* =====================================================
+            Error State
+            ===================================================== */
         <p className="text-red-500">{error}</p>
       ) : (
         /* =====================================================
-          Products Table
-          ===================================================== */
+            Products Table
+            ===================================================== */
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             {/* Table Head */}
@@ -83,7 +87,11 @@ const ProductListPage = () => {
                 <th className="p-4 border-b">Category</th>
                 <th className="p-4 border-b">Price</th>
                 <th className="p-4 border-b">Stock</th>
-                <th className="p-4 border-b">Actions</th>
+
+                {/* Actions column sirf admin ko */}
+                {userInfo?.isAdmin && (
+                  <th className="p-4 border-b">Actions</th>
+                )}
               </tr>
             </thead>
 
@@ -101,7 +109,9 @@ const ProductListPage = () => {
                     </td>
 
                     {/* Product Category */}
-                    <td className="p-4 text-gray-600">{product.category}</td>
+                    <td className="p-4 text-gray-600">
+                      {product.category}
+                    </td>
 
                     {/* Product Price */}
                     <td className="p-4 text-gray-900 font-semibold">
@@ -124,33 +134,38 @@ const ProductListPage = () => {
                     </td>
 
                     {/* =================================================
-                        Action Buttons
+                        Action Buttons - Admin Only
                         ================================================= */}
-                    <td className="p-4 flex gap-3">
-                      {/* Edit Button */}
-                      <button
-                        onClick={() =>
-                          navigate(`/products/edit/${product._id}`)
-                        }
-                        className="text-blue-500 hover:text-blue-700"
-                      >
-                        <Edit size={18} />
-                      </button>
+                    {userInfo?.isAdmin && (
+                      <td className="p-4 flex gap-3">
+                        {/* Edit Button */}
+                        <button
+                          onClick={() =>
+                            navigate(`/products/edit/${product._id}`)
+                          }
+                          className="text-blue-500 hover:text-blue-700"
+                        >
+                          <Edit size={18} />
+                        </button>
 
-                      {/* Delete Button */}
-                      <button
-                        onClick={() => deleteHandler(product._id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </td>
+                        {/* Delete Button */}
+                        <button
+                          onClick={() => deleteHandler(product._id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))
               ) : (
                 /* No Products Found */
                 <tr>
-                  <td colSpan={5} className="p-4 text-center text-gray-500">
+                  <td
+                    colSpan={userInfo?.isAdmin ? 5 : 4}
+                    className="p-4 text-center text-gray-500"
+                  >
                     No Products Found
                   </td>
                 </tr>
