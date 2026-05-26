@@ -1,11 +1,13 @@
 // src/pages/OrderListPage.tsx
-import React, { useEffect } from "react";
+import  { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { listOrders, deliverOrder } from "../store/orderSlice";
+import { useNavigate } from "react-router-dom";
 
 const OrderListPage = () => {
   const dispatch = useAppDispatch();
-  
+  const navigate = useNavigate();
+
   // Redux store se orders uthana
   const { orders, loading, error } = useAppSelector((state) => state.orders);
 
@@ -14,7 +16,9 @@ const OrderListPage = () => {
   }, [dispatch]);
 
   const deliverHandler = async (id: string) => {
-    if (window.confirm("Kya aap is order ko Delivered mark karna chahte hain?")) {
+    if (
+      window.confirm("Kya aap is order ko Delivered mark karna chahte hain?")
+    ) {
       try {
         await dispatch(deliverOrder(id)).unwrap();
         alert("Order status updated to Delivered! 🚚");
@@ -24,12 +28,18 @@ const OrderListPage = () => {
     }
   };
 
-  if (loading) return <div className="text-center mt-10 font-bold">Loading Orders...</div>;
-  if (error) return <div className="text-center mt-10 text-red-500 font-bold">{error}</div>;
+  if (loading)
+    return <div className="text-center mt-10 font-bold">Loading Orders...</div>;
+  if (error)
+    return (
+      <div className="text-center mt-10 text-red-500 font-bold">{error}</div>
+    );
 
   return (
     <div className="p-6 bg-white rounded-2xl shadow-sm border border-gray-100 max-w-6xl mx-auto mt-6">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">Orders Command Center</h2>
+      <h2 className="text-2xl font-bold mb-6 text-gray-800">
+        Orders Command Center
+      </h2>
 
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
@@ -47,10 +57,18 @@ const OrderListPage = () => {
           <tbody className="text-gray-600 text-sm divide-y divide-gray-100">
             {orders.map((order: any) => (
               <tr key={order._id} className="hover:bg-gray-50 transition">
-                <td className="p-4 font-mono text-xs text-blue-600">{order._id}</td>
-                <td className="p-4 font-medium text-gray-800">{order.user && order.user.name}</td>
-                <td className="p-4">{new Date(order.createdAt).toLocaleDateString()}</td>
-                <td className="p-4 font-bold text-gray-800">${order.totalPrice}</td>
+                <td className="p-4 font-mono text-xs text-blue-600">
+                  {order._id}
+                </td>
+                <td className="p-4 font-medium text-gray-800">
+                  {order.user && order.user.name}
+                </td>
+                <td className="p-4">
+                  {new Date(order.createdAt).toLocaleDateString()}
+                </td>
+                <td className="p-4 font-bold text-gray-800">
+                  ${order.totalPrice}
+                </td>
                 <td className="p-4">
                   {order.isPaid ? (
                     <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">
@@ -73,7 +91,18 @@ const OrderListPage = () => {
                     </span>
                   )}
                 </td>
-                <td className="p-4">
+                <td className="p-4 flex gap-2">
+                  {/* Agar order paid nahi hai, to Pay Now ka button dikhao */}
+                  {!order.isPaid && (
+                    <button
+                      onClick={() => navigate(`/order-pay/${order._id}`)}
+                      className="bg-green-600 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-green-700 transition shadow-sm"
+                    >
+                      Pay Now 💳
+                    </button>
+                  )}
+
+                  {/* Aapka purana Mark as Delivered wala button */}
                   {order.isPaid && !order.isDelivered && (
                     <button
                       onClick={() => deliverHandler(order._id)}

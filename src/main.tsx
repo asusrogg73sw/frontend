@@ -22,6 +22,7 @@ import ProtectedRoute from "./components/ProtectedRoute.tsx";
 import AdminRoute from "./components/AdminRoute";
 
 import UserListPage from "./pages/UserListPage.tsx";
+import OrderPaymentPage from "./pages/OrderPaymentPage.tsx";
 
 // Router setup
 const router = createBrowserRouter([
@@ -59,6 +60,7 @@ const router = createBrowserRouter([
             path: "/orders",
             element: <OrderListPage />,
           },
+          { path: "/order-pay/:id", element: <OrderPaymentPage /> }
         ],
       },
 

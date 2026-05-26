@@ -1,11 +1,11 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { LayoutDashboard, ShoppingBag, Users, LogOut, ShoppingBagIcon } from "lucide-react";
 import { useAppDispatch } from "../store/hooks";
 import { logoutUser } from "../store/authSlice";
 
 const Sidebar = () => {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const handleLogout = () => {
     dispatch(logoutUser());

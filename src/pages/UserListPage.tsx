@@ -1,5 +1,5 @@
 // src/pages/UserListPage.tsx
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { listUsers, deleteUser, toggleAdminRole } from "../store/userSlice";
 
