@@ -2,16 +2,38 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import API from "../api/axios";
 
 /* =========================================================
+   // NEW: Product Type
+   ========================================================= */
+interface Product {
+  _id: string;
+  name: string;
+  price: number;
+  brand?: string;
+  category?: string;
+  description?: string;
+  image?: string;
+  countInStock?: number;
+}
+
+/* =========================================================
+   // NEW: Product State Type
+   ========================================================= */
+interface ProductState {
+  products: Product[];
+  loading: boolean;
+  error: string | null;
+  productDetails: Product | null;
+}
+
+/* =========================================================
    1. Fetch All Products
    ========================================================= */
 export const listProducts = createAsyncThunk(
   "products/list",
   async (_, { rejectWithValue }) => {
     try {
-      // Backend se tamam products fetch kar rahe hain
       const response = await API.get("/products");
 
-      // Products return honge
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -28,10 +50,8 @@ export const createProduct = createAsyncThunk(
   "products/create",
   async (productData: any, { rejectWithValue }) => {
     try {
-      // Naya product create kar rahe hain
       const response = await API.post("/products", productData);
 
-      // Created product return hoga
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -48,10 +68,8 @@ export const deleteProduct = createAsyncThunk(
   "products/delete",
   async (id: string, { rejectWithValue }) => {
     try {
-      // Product delete kar rahe hain
       await API.delete(`/products/${id}`);
 
-      // Sirf ID return karenge taake state se remove kar saken
       return id;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || "Delete failed");
@@ -66,7 +84,6 @@ export const getProductDetails = createAsyncThunk(
   "products/details",
   async (id: string, { rejectWithValue }) => {
     try {
-      // Single product ki details fetch kar rahe hain
       const response = await API.get(`/products/${id}`);
 
       return response.data;
@@ -94,10 +111,8 @@ export const updateProductAction = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
-      // Product update kar rahe hain
       const response = await API.put(`/products/${id}`, productData);
 
-      // Updated product return hoga
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -108,15 +123,13 @@ export const updateProductAction = createAsyncThunk(
 );
 
 /* =========================================================
-   Initial State
+   // NEW: Properly Typed Initial State
    ========================================================= */
-const initialState = {
+const initialState: ProductState = {
   products: [],
   loading: false,
-  error: null as string | null,
-
-  // Single product details store karne ke liye
-  productDetails: null as any,
+  error: null,
+  productDetails: null,
 };
 
 /* =========================================================
@@ -135,21 +148,18 @@ const productSlice = createSlice({
          LIST PRODUCTS
          ===================================================== */
       .addCase(listProducts.pending, (state) => {
-        // Loading start
         state.loading = true;
         state.error = null;
       })
 
       .addCase(listProducts.fulfilled, (state, action) => {
-        // Loading stop
         state.loading = false;
 
-        // Products state mein save kar rahe hain
-        state.products = action.payload.products;
+        // NEW: Safe fallback
+        state.products = action.payload.products || [];
       })
 
       .addCase(listProducts.rejected, (state, action) => {
-        // Error handle
         state.loading = false;
         state.error = action.payload as string;
       })
@@ -164,7 +174,7 @@ const productSlice = createSlice({
       .addCase(createProduct.fulfilled, (state, action) => {
         state.loading = false;
 
-        // Naya product array ke start mein add kar rahe hain
+        // Ab error nahi aayega
         state.products = [action.payload, ...state.products];
       })
 
@@ -183,9 +193,9 @@ const productSlice = createSlice({
       .addCase(deleteProduct.fulfilled, (state, action) => {
         state.loading = false;
 
-        // Deleted product ko state se remove kar rahe hain
+        // NEW: Proper Product typing
         state.products = state.products.filter(
-          (p: any) => p._id !== action.payload,
+          (p) => p._id !== action.payload,
         );
       })
 
@@ -195,7 +205,7 @@ const productSlice = createSlice({
       })
 
       /* =====================================================
-         GET SINGLE PRODUCT DETAILS
+         GET PRODUCT DETAILS
          ===================================================== */
       .addCase(getProductDetails.pending, (state) => {
         state.loading = true;
@@ -205,7 +215,6 @@ const productSlice = createSlice({
       .addCase(getProductDetails.fulfilled, (state, action) => {
         state.loading = false;
 
-        // Single product details save kar rahe hain
         state.productDetails = action.payload;
       })
 
@@ -224,17 +233,15 @@ const productSlice = createSlice({
       .addCase(updateProductAction.fulfilled, (state, action) => {
         state.loading = false;
 
-        // Products array mein us product ka index dhoond rahe hain
         const index = state.products.findIndex(
-          (p: any) => p._id === action.payload._id,
+          (p) => p._id === action.payload._id,
         );
 
-        // Agar product mil gaya to usko updated data se replace kar do
+        // Ab ye bhi error nahi dega
         if (index !== -1) {
           state.products[index] = action.payload;
         }
 
-        // Single product details bhi update kar do
         state.productDetails = action.payload;
       })
 
