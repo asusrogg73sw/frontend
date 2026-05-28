@@ -2,9 +2,9 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import API from "../api/axios";
 
 /* =========================================================
-   // NEW: Product Type
+   // FIXED: Added 'export' so it can be used in components
    ========================================================= */
-interface Product {
+export interface Product {
   _id: string;
   name: string;
   price: number;
@@ -16,7 +16,7 @@ interface Product {
 }
 
 /* =========================================================
-   // NEW: Product State Type
+   // Product State Type
    ========================================================= */
 interface ProductState {
   products: Product[];
@@ -33,11 +33,12 @@ export const listProducts = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await API.get("/products");
-
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      // FIXED: Removed 'any' from catch block
+      const errMsg = error as { response?: { data?: { message?: string } } };
       return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch products",
+        errMsg.response?.data?.message || "Failed to fetch products",
       );
     }
   },
@@ -48,14 +49,14 @@ export const listProducts = createAsyncThunk(
    ========================================================= */
 export const createProduct = createAsyncThunk(
   "products/create",
-  async (productData: any, { rejectWithValue }) => {
+  async (productData: Partial<Product>, { rejectWithValue }) => { // FIXED: replaced 'any' with Partial<Product>
     try {
       const response = await API.post("/products", productData);
-
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errMsg = error as { response?: { data?: { message?: string } } };
       return rejectWithValue(
-        error.response?.data?.message || "Failed to create product",
+        errMsg.response?.data?.message || "Failed to create product",
       );
     }
   },
@@ -69,10 +70,10 @@ export const deleteProduct = createAsyncThunk(
   async (id: string, { rejectWithValue }) => {
     try {
       await API.delete(`/products/${id}`);
-
       return id;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Delete failed");
+    } catch (error: unknown) {
+      const errMsg = error as { response?: { data?: { message?: string } } };
+      return rejectWithValue(errMsg.response?.data?.message || "Delete failed");
     }
   },
 );
@@ -85,11 +86,11 @@ export const getProductDetails = createAsyncThunk(
   async (id: string, { rejectWithValue }) => {
     try {
       const response = await API.get(`/products/${id}`);
-
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errMsg = error as { response?: { data?: { message?: string } } };
       return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch product details",
+        errMsg.response?.data?.message || "Failed to fetch product details",
       );
     }
   },
@@ -106,24 +107,24 @@ export const updateProductAction = createAsyncThunk(
       productData,
     }: {
       id: string;
-      productData: any;
+      productData: Partial<Product>; // FIXED: replaced 'any' with Partial<Product>
     },
     { rejectWithValue },
   ) => {
     try {
       const response = await API.put(`/products/${id}`, productData);
-
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errMsg = error as { response?: { data?: { message?: string } } };
       return rejectWithValue(
-        error.response?.data?.message || "Failed to update product",
+        errMsg.response?.data?.message || "Failed to update product",
       );
     }
   },
 );
 
 /* =========================================================
-   // NEW: Properly Typed Initial State
+   // Properly Typed Initial State
    ========================================================= */
 const initialState: ProductState = {
   products: [],
@@ -138,113 +139,75 @@ const initialState: ProductState = {
 const productSlice = createSlice({
   name: "products",
   initialState,
-
   reducers: {},
-
   extraReducers: (builder) => {
     builder
-
-      /* =====================================================
-         LIST PRODUCTS
-         ===================================================== */
+      /* === LIST PRODUCTS === */
       .addCase(listProducts.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-
       .addCase(listProducts.fulfilled, (state, action) => {
         state.loading = false;
-
-        // NEW: Safe fallback
-        state.products = action.payload.products || [];
+        state.products = action.payload.products || action.payload || [];
       })
-
       .addCase(listProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
 
-      /* =====================================================
-         CREATE PRODUCT
-         ===================================================== */
+      /* === CREATE PRODUCT === */
       .addCase(createProduct.pending, (state) => {
         state.loading = true;
       })
-
       .addCase(createProduct.fulfilled, (state, action) => {
         state.loading = false;
-
-        // Ab error nahi aayega
         state.products = [action.payload, ...state.products];
       })
-
       .addCase(createProduct.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
 
-      /* =====================================================
-         DELETE PRODUCT
-         ===================================================== */
+      /* === DELETE PRODUCT === */
       .addCase(deleteProduct.pending, (state) => {
         state.loading = true;
       })
-
       .addCase(deleteProduct.fulfilled, (state, action) => {
         state.loading = false;
-
-        // NEW: Proper Product typing
-        state.products = state.products.filter(
-          (p) => p._id !== action.payload,
-        );
+        state.products = state.products.filter((p) => p._id !== action.payload);
       })
-
       .addCase(deleteProduct.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
 
-      /* =====================================================
-         GET PRODUCT DETAILS
-         ===================================================== */
+      /* === GET PRODUCT DETAILS === */
       .addCase(getProductDetails.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-
       .addCase(getProductDetails.fulfilled, (state, action) => {
         state.loading = false;
-
         state.productDetails = action.payload;
       })
-
       .addCase(getProductDetails.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
 
-      /* =====================================================
-         UPDATE PRODUCT
-         ===================================================== */
+      /* === UPDATE PRODUCT === */
       .addCase(updateProductAction.pending, (state) => {
         state.loading = true;
       })
-
       .addCase(updateProductAction.fulfilled, (state, action) => {
         state.loading = false;
-
-        const index = state.products.findIndex(
-          (p) => p._id === action.payload._id,
-        );
-
-        // Ab ye bhi error nahi dega
+        const index = state.products.findIndex((p) => p._id === action.payload._id);
         if (index !== -1) {
           state.products[index] = action.payload;
         }
-
         state.productDetails = action.payload;
       })
-
       .addCase(updateProductAction.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;

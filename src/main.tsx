@@ -1,14 +1,10 @@
-// main.tsx
-
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Provider } from "react-redux";
 
 import { store } from "./store";
-
 import "./index.css";
-
 import App from "./App.tsx";
 
 import HomePage from "./pages/HomePage.tsx";
@@ -23,6 +19,7 @@ import AdminRoute from "./components/AdminRoute";
 
 import UserListPage from "./pages/UserListPage.tsx";
 import OrderPaymentPage from "./pages/OrderPaymentPage.tsx";
+import CartPage from "./pages/CartPage.tsx";
 
 // Router setup
 const router = createBrowserRouter([
@@ -30,24 +27,18 @@ const router = createBrowserRouter([
     path: "/",
     element: <App />,
     children: [
-      // =====================================================
       // Public Routes
-      // =====================================================
-
       {
         path: "/login",
         element: <LoginPage />,
       },
-
       {
         path: "/products",
         element: <ProductListPage />,
       },
+      { path: "/cart", element: <CartPage /> },
 
-      // =====================================================
       // Protected Routes (Logged-in Users)
-      // =====================================================
-
       {
         element: <ProtectedRoute />,
         children: [
@@ -55,19 +46,15 @@ const router = createBrowserRouter([
             path: "/",
             element: <HomePage />,
           },
-
           {
             path: "/orders",
             element: <OrderListPage />,
           },
-          { path: "/order-pay/:id", element: <OrderPaymentPage /> }
+          { path: "/order-pay/:id", element: <OrderPaymentPage /> },
         ],
       },
 
-      // =====================================================
       // Admin Routes
-      // =====================================================
-
       {
         element: <AdminRoute />,
         children: [
@@ -75,7 +62,6 @@ const router = createBrowserRouter([
             path: "/products/add",
             element: <AddProductPage />,
           },
-
           {
             path: "/products/edit/:id",
             element: <EditProductPage />,
