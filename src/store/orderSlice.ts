@@ -1,3 +1,4 @@
+// src/store/orderSlice.ts
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import API from "../api/axios";
 
@@ -11,9 +12,9 @@ export interface OrderItem {
   price: number;
 }
 
-// Database se aane wale mukammal Order Object ka structure
 export interface Order {
   _id: string;
+  user: string; 
   orderItems: OrderItem[];
   shippingAddress: {
     address: string;
@@ -23,18 +24,20 @@ export interface Order {
   };
   paymentMethod: string;
   itemsPrice: number;
-  taxPrice?: number; // NEW FIX: taxPrice ko optional (?) kiya taake agar client se missing ho to error na aaye
+  taxPrice?: number; 
   shippingPrice: number;
   totalPrice: number;
   isPaid: boolean;
+  paidAt?: string;      
   isDelivered: boolean;
+  deliveredAt?: string;  
+  createdAt?: string;    
 }
 
-// Order Slice ki state ka structure
 interface OrderState {
-  orders: Order[]; // Tamam orders ki list array
-  loading: boolean; // Loading spinner status
-  error: string | null; // Error message store karne ke liye
+  orders: Order[]; 
+  loading: boolean; 
+  error: string | null; 
 }
 
 // --- ASYNC THUNKS (API Calls) ---
@@ -50,6 +53,22 @@ export const listOrders = createAsyncThunk<Order[], void>(
       const errMsg = error as { response?: { data?: { message?: string } } };
       return rejectWithValue(
         errMsg.response?.data?.message || "Failed to fetch orders",
+      );
+    }
+  },
+);
+
+// Fetch Authenticated Customer Orders
+export const listMyOrders = createAsyncThunk<Order[], void>(
+  "orders/listMyOrders",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await API.get("/orders/myorders");
+      return response.data;
+    } catch (error: unknown) {
+      const errMsg = error as { response?: { data?: { message?: string } } };
+      return rejectWithValue(
+        errMsg.response?.data?.message || "Failed to fetch your orders",
       );
     }
   },
@@ -87,6 +106,23 @@ export const createOrder = createAsyncThunk<Order, Partial<Order>>(
   },
 );
 
+// 🚀 NEW FIX: 4. Delete/Cancel Order Action Thunk
+// Id pass karenge backend ko aur return mein deleted order ki ID bhejenge core mapping ke liye
+export const deleteOrder = createAsyncThunk<string, string>(
+  "orders/delete",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      await API.delete(`/orders/${id}`);
+      return id; // Fulfilled case ke liye raw id return ki
+    } catch (error: unknown) {
+      const errMsg = error as { response?: { data?: { message?: string } } };
+      return rejectWithValue(
+        errMsg.response?.data?.message || "Failed to cancel order",
+      );
+    }
+  },
+);
+
 // --- SLICE CONFIGURATION ---
 
 const initialState: OrderState = {
@@ -115,6 +151,20 @@ const orderSlice = createSlice({
         state.error = action.payload as string;
       })
 
+      // === List My Orders Cases ===
+      .addCase(listMyOrders.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(listMyOrders.fulfilled, (state, action) => {
+        state.loading = false;
+        state.orders = action.payload; 
+      })
+      .addCase(listMyOrders.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
       // === Deliver Order Case ===
       .addCase(deliverOrder.fulfilled, (state, action) => {
         state.loading = false;
@@ -130,6 +180,21 @@ const orderSlice = createSlice({
       .addCase(createOrder.fulfilled, (state, action) => {
         state.loading = false;
         state.orders.push(action.payload);
+      })
+
+      // 🚀 NEW FIX: === Delete Order Cases ===
+      .addCase(deleteOrder.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteOrder.fulfilled, (state, action) => {
+        state.loading = false;
+        // Global state se immediate filter karkay component arrays clean kar diye bina refresh kiye
+        state.orders = state.orders.filter((order) => order._id !== action.payload);
+      })
+      .addCase(deleteOrder.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });

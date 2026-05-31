@@ -1,6 +1,16 @@
-// src/store/userSlice.ts
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import API from "../api/axios";
+
+// NEW FIX: Defined an interface matching the backend model to remove 'any'
+interface UserState {
+  _id: string;
+  name: string;
+  email: string;
+  age: number;
+  isAdmin: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 // 1. Fetch All Users (Admin Only)
 export const listUsers = createAsyncThunk(
@@ -9,9 +19,11 @@ export const listUsers = createAsyncThunk(
     try {
       const response = await API.get("/users");
       return response.data; // Users ka array
-    } catch (error: any) {
+    } catch (error: unknown) { 
+      // NEW FIX: Replaced 'any' with 'unknown' and safe type casting for Axios error
+      const err = error as { response?: { data?: { message?: string } } };
       return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch users",
+        err.response?.data?.message || "Failed to fetch users",
       );
     }
   },
@@ -24,9 +36,11 @@ export const deleteUser = createAsyncThunk(
     try {
       await API.delete(`/users/${id}`);
       return id; // Return ID taake state se filter ho sake
-    } catch (error: any) {
+    } catch (error: unknown) {
+      // NEW FIX: Replaced 'any' with 'unknown'
+      const err = error as { response?: { data?: { message?: string } } };
       return rejectWithValue(
-        error.response?.data?.message || "Failed to delete user",
+        err.response?.data?.message || "Failed to delete user",
       );
     }
   },
@@ -39,9 +53,11 @@ export const toggleAdminRole = createAsyncThunk(
     try {
       const response = await API.put(`/users/${id}/toggle-admin`);
       return response.data; // Updated user object
-    } catch (error: any) {
+    } catch (error: unknown) {
+      // NEW FIX: Replaced 'any' with 'unknown'
+      const err = error as { response?: { data?: { message?: string } } };
       return rejectWithValue(
-        error.response?.data?.message || "Failed to update user role",
+        err.response?.data?.message || "Failed to update user role",
       );
     }
   },
@@ -50,7 +66,7 @@ export const toggleAdminRole = createAsyncThunk(
 const userSlice = createSlice({
   name: "users",
   initialState: {
-    users: [] as any[],
+    users: [] as UserState[], // NEW FIX: Used 'UserState[]' instead of 'any[]'
     loading: false,
     error: null as string | null,
   },
@@ -72,12 +88,14 @@ const userSlice = createSlice({
       })
       // Delete User
       .addCase(deleteUser.fulfilled, (state, action) => {
-        state.users = state.users.filter((u: any) => u._id !== action.payload);
+        // NEW FIX: Corrected explicit parameter type 'u: any' to 'UserState'
+        state.users = state.users.filter((u: UserState) => u._id !== action.payload);
       })
       // Toggle Admin Role
       .addCase(toggleAdminRole.fulfilled, (state, action) => {
+        // NEW FIX: Corrected explicit parameter type 'u: any' to 'UserState'
         const index = state.users.findIndex(
-          (u: any) => u._id === action.payload._id,
+          (u: UserState) => u._id === action.payload._id,
         );
         if (index !== -1) {
           state.users[index] = action.payload; // Live status update

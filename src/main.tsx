@@ -7,73 +7,90 @@ import { store } from "./store";
 import "./index.css";
 import App from "./App.tsx";
 
+// Pages
 import HomePage from "./pages/HomePage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
 import ProductListPage from "./pages/ProductListPage.tsx";
 import AddProductPage from "./pages/AddProductPage.tsx";
 import EditProductPage from "./pages/EditProductPage.tsx";
 import OrderListPage from "./pages/OrderListPage.tsx";
-
-import ProtectedRoute from "./components/ProtectedRoute.tsx";
-import AdminRoute from "./components/AdminRoute";
-
 import UserListPage from "./pages/UserListPage.tsx";
 import OrderPaymentPage from "./pages/OrderPaymentPage.tsx";
 import CartPage from "./pages/CartPage.tsx";
+import MyOrdersPage from "./pages/MyOrdersPage.tsx";
+// 🚀 NEW FIX: Naye Profile component page ko import list me inject kiya
+import ProfilePage from "./pages/ProfilePage.tsx";
 
-// Router setup
+import AdminDashboardPage from "./pages/AdminDashboardPage.tsx";
+
+// Middlewares / Route Guards
+import ProtectedRoute from "./components/ProtectedRoute.tsx";
+import AdminRoute from "./components/AdminRoute";
+
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
     children: [
-      // Public Routes
+      // 🌍 1. Public Routes
+      {
+        path: "/", 
+        element: <HomePage />, 
+      },
       {
         path: "/login",
         element: <LoginPage />,
       },
-      {
-        path: "/products",
-        element: <ProductListPage />,
+      { 
+        path: "/cart", 
+        element: <CartPage /> 
       },
-      { path: "/cart", element: <CartPage /> },
 
-      // Protected Routes (Logged-in Users)
+      // 🔐 2. Customer/User Protected Routes
       {
         element: <ProtectedRoute />,
         children: [
-          {
-            path: "/",
-            element: <HomePage />,
-          },
-          {
-            path: "/orders",
-            element: <OrderListPage />,
-          },
+          { path: "/my-orders", element: <MyOrdersPage /> }, 
+          // 🚀 NEW FIX: Profile management route dashboard map table me secure ki
+          { path: "/profile", element: <ProfilePage /> }, 
           { path: "/order-pay/:id", element: <OrderPaymentPage /> },
         ],
       },
 
-      // Admin Routes
+      // 👑 3. Admin Only Routes
       {
         element: <AdminRoute />,
         children: [
           {
-            path: "/products/add",
+            path: "/admin/dashboard", 
+            element: <AdminDashboardPage />, 
+          },
+          {
+            path: "/admin/products",
+            element: <ProductListPage />,
+          },
+          {
+            path: "/admin/orders", 
+            element: <OrderListPage />, 
+          },
+          {
+            path: "/admin/products/add",
             element: <AddProductPage />,
           },
           {
-            path: "/products/edit/:id",
+            path: "/admin/products/edit/:id",
             element: <EditProductPage />,
           },
-          { path: "/users", element: <UserListPage /> },
+          { 
+            path: "/admin/users", 
+            element: <UserListPage /> 
+          },
         ],
       },
     ],
   },
 ]);
 
-// Render App
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Provider store={store}>

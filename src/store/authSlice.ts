@@ -1,29 +1,36 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import API from "../api/axios";
 
+interface LoginCredentials {
+  email: string;
+  password?: string;
+  [key: string]: unknown;
+}
+
 // 1. Login Action
 export const loginUser = createAsyncThunk(
   "auth/login",
-  async (userData: any, { rejectWithValue }) => {
+  async (userData: LoginCredentials, { rejectWithValue }) => {
     try {
       const response = await API.post("/users/login", userData);
-      // User info (name, email, isAdmin) UI ke liye save kar rahe hain
       localStorage.setItem("userInfo", JSON.stringify(response.data));
       return response.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || "Login failed");
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      return rejectWithValue(err.response?.data?.message || "Login failed");
     }
   },
 );
 
-// 2. Logout Action (Ab ye backend cookie ko bhi uraye ga)
+// 2. Logout Action
 export const logoutUser = createAsyncThunk(
   "auth/logout",
   async (_, { rejectWithValue }) => {
     try {
       await API.post("/users/logout");
       localStorage.removeItem("userInfo");
-    } catch (error: any) {
+    } catch { 
+      // NEW FIX: Catch block se variable completely remove kar diya taake unused-vars error permanently khatam ho jaye
       return rejectWithValue("Logout failed");
     }
   },
