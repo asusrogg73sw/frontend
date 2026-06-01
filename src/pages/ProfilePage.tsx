@@ -1,121 +1,113 @@
 // src/pages/ProfilePage.tsx
-import { useState, useEffect } from "react";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { User, Mail, MapPin, Phone, Lock, Save } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { useAppSelector } from "../store/hooks"; 
 import API from "../api/axios";
 
 const ProfilePage = () => {
   const { userInfo } = useAppSelector((state) => state.auth);
-  
-  // Local Input States
-  const [name, setName] = useState(userInfo?.name || "");
-  const [email, setEmail] = useState(userInfo?.email || "");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [password, setPassword] = useState("");
-  
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
 
-  // Backend user profile profile session load effect logic if details exist
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const response = await API.get("/users/profile"); // Aapka user profile profile endpoint
-        if (response.data) {
-          setPhone(response.data.phone || "");
-          setAddress(response.data.address || "");
-        }
-      } catch (err) {
-        console.log("Profile data load error", err);
-      }
-    };
-    if (userInfo) fetchUserProfile();
+    if (userInfo) {
+      setName(userInfo.name);
+      setEmail(userInfo.email);
+    }
   }, [userInfo]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const submitHandler = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(false);
-    setMessage("");
+    setMessage(null);
+    setSuccess(false);
+
+    if (password !== confirmPassword) {
+      setMessage("Passwords do not match");
+      return;
+    }
 
     try {
       setLoading(true);
-      // Put user parameters mapped safely
-      const payload = { name, email, phone, address, ...(password && { password }) };
-      const response = await API.put("/users/profile", payload);
-      
-      // Agar backend se raw response successful aaye
-      setMessage("Profile successfully updated! ✨");
-      setPassword(""); // Clear field boundary
+      const payload: any = { name, email };
+      if (password) {
+        payload.password = password;
+      }
+
+      await API.put("/users/profile", payload);
+
+      setSuccess(true);
+      setPassword("");
+      setConfirmPassword(""); // 🚀 NEW FIX: Changed confirmPassword("") to setConfirmPassword("") function expression
     } catch (err: any) {
-      setMessage(err.response?.data?.message || "Something went wrong saving database records");
+      setMessage(err.response?.data?.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-3xl border border-gray-100 shadow-sm mt-6">
-      <div className="mb-6">
-        <h2 className="text-2xl font-extrabold text-gray-800">My Personal Profile</h2>
-        <p className="text-gray-400 text-xs">Update your shipping coordinates, secure identity details, and login sessions.</p>
-      </div>
+    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-2xl shadow-md border border-gray-100">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Update Profile</h2>
+      
+      {message && <div className="mb-4 p-3 bg-red-100 text-red-700 text-sm rounded-xl">{message}</div>}
+      {success && <div className="mb-4 p-3 bg-green-100 text-green-700 text-sm rounded-xl">Profile Updated Successfully!</div>}
 
-      {message && (
-        <div className={`p-4 mb-4 rounded-xl text-xs font-bold ${message.includes("success") ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
-          {message}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Name Fields */}
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 uppercase">Full Name</label>
-          <div className="relative">
-            <User className="absolute left-3 top-3 text-gray-400" size={16} />
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" required />
-          </div>
+      <form onSubmit={submitHandler} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-600 mb-1">Name</label>
+          <input
+            type="text"
+            className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
         </div>
 
-        {/* Email Address */}
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 uppercase">Email Address</label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-3 text-gray-400" size={16} />
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" required />
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-600 mb-1">Email Address</label>
+          <input
+            type="email"
+            className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
         </div>
 
-        {/* Phone Number */}
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 uppercase">Phone Number</label>
-          <div className="relative">
-            <Phone className="absolute left-3 top-3 text-gray-400" size={16} />
-            <input type="text" value={phone} placeholder="+92 300 1234567" onChange={(e) => setPhone(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-600 mb-1">New Password</label>
+          <input
+            type="password"
+            className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Leave blank to keep same"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
         </div>
 
-        {/* Delivery Shipping Address */}
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 uppercase">Default Shipping Address</label>
-          <div className="relative">
-            <MapPin className="absolute left-3 top-3 text-gray-400" size={16} />
-            <textarea value={address} placeholder="Street, Sector/Area, City, Province" onChange={(e) => setAddress(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none min-h-[70px] resize-none" />
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-600 mb-1">Confirm New Password</label>
+          <input
+            type="password"
+            className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Confirm new password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
         </div>
 
-        {/* Update Authentication Security */}
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 uppercase">New Password (Leave blank to keep current)</label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-3 text-gray-400" size={16} />
-            <input type="password" value={password} placeholder="••••••••" onChange={(e) => setPassword(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
-          </div>
-        </div>
-
-        <button type="submit" disabled={loading} className="w-full py-2.5 bg-blue-600 text-white font-bold rounded-xl text-xs hover:bg-blue-700 transition flex items-center justify-center gap-2 shadow-sm">
-          <Save size={14} />
-          {loading ? "Saving Changes..." : "Update Settings Profiles"}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl transition disabled:opacity-50"
+        >
+          {loading ? "Updating..." : "Save Changes"}
         </button>
       </form>
     </div>
