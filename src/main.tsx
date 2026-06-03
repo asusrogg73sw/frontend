@@ -10,7 +10,6 @@ import App from "./App.tsx";
 // Pages
 import HomePage from "./pages/HomePage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
-// 🚀 NEW FIX: Register page component ko import list me shamil kiya
 import RegisterPage from "./pages/RegisterPage.tsx"; 
 import ProductListPage from "./pages/ProductListPage.tsx";
 import AddProductPage from "./pages/AddProductPage.tsx";
@@ -20,10 +19,9 @@ import UserListPage from "./pages/UserListPage.tsx";
 import OrderPaymentPage from "./pages/OrderPaymentPage.tsx";
 import CartPage from "./pages/CartPage.tsx";
 import MyOrdersPage from "./pages/MyOrdersPage.tsx";
-// 🚀 NEW FIX: Naye Profile component page ko import list me inject kiya
 import ProfilePage from "./pages/ProfilePage.tsx";
-
 import AdminDashboardPage from "./pages/AdminDashboardPage.tsx";
+import ShippingPage from "./pages/ShippingPage.tsx"; // 🚀 Naya Import Added
 
 // Middlewares / Route Guards
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
@@ -35,30 +33,17 @@ const router = createBrowserRouter([
     element: <App />,
     children: [
       // 🌍 1. Public Routes
-      {
-        path: "/", 
-        element: <HomePage />, 
-      },
-      {
-        path: "/login",
-        element: <LoginPage />,
-      },
-      // 🚀 NEW FIX: Naye customer registration flow ke liye route inject kiya
-      {
-        path: "/register",
-        element: <RegisterPage />,
-      },
-      { 
-        path: "/cart", 
-        element: <CartPage /> 
-      },
+      { path: "/", element: <HomePage /> },
+      { path: "/login", element: <LoginPage /> },
+      { path: "/register", element: <RegisterPage /> },
+      { path: "/cart", element: <CartPage /> },
 
       // 🔐 2. Customer/User Protected Routes
       {
         element: <ProtectedRoute />,
         children: [
+          { path: "/shipping", element: <ShippingPage /> }, // 🚀 Naya Secure Shipping Route Inject Kiya
           { path: "/my-orders", element: <MyOrdersPage /> }, 
-          // 🚀 NEW FIX: Profile management route dashboard map table me secure ki
           { path: "/profile", element: <ProfilePage /> }, 
           { path: "/order-pay/:id", element: <OrderPaymentPage /> },
         ],
@@ -68,30 +53,12 @@ const router = createBrowserRouter([
       {
         element: <AdminRoute />,
         children: [
-          {
-            path: "/admin/dashboard", 
-            element: <AdminDashboardPage />, 
-          },
-          {
-            path: "/admin/products",
-            element: <ProductListPage />,
-          },
-          {
-            path: "/admin/orders", 
-            element: <OrderListPage />, 
-          },
-          {
-            path: "/admin/products/add",
-            element: <AddProductPage />,
-          },
-          {
-            path: "/admin/products/edit/:id",
-            element: <EditProductPage />,
-          },
-          { 
-            path: "/admin/users", 
-            element: <UserListPage /> 
-          },
+          { path: "/admin/dashboard", element: <AdminDashboardPage /> },
+          { path: "/admin/products", element: <ProductListPage /> },
+          { path: "/admin/orders", element: <OrderListPage /> },
+          { path: "/admin/products/add", element: <AddProductPage /> },
+          { path: "/admin/products/edit/:id", element: <EditProductPage /> },
+          { path: "/admin/users", element: <UserListPage /> },
         ],
       },
     ],

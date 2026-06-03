@@ -76,22 +76,11 @@ const OrderPaymentPage = () => {
   const handleCODPayment = async () => {
     setCodLoading(true);
     try {
-      // FIX: Payload structure aligned perfectly for updated backend expectations
-      const updatedAddress = userInfo?.shippingAddress ? {
-        firstName: userInfo.shippingAddress.firstName || order?.shippingAddress?.firstName,
-        lastName: userInfo.shippingAddress.lastName || order?.shippingAddress?.lastName,
-        address: userInfo.shippingAddress.address,
-        city: userInfo.shippingAddress.city,
-        postalCode: userInfo.shippingAddress.postalCode,
-        country: userInfo.shippingAddress.country,
-        phone: userInfo.shippingAddress.phone || order?.shippingAddress?.phone
-      } : order?.shippingAddress;
-
+      // FIX: Payload se shippingAddress remove kar diya taake backend order data par depend rahe.
       await API.put(`/orders/${id}/pay`, {
         id: `COD-${Date.now()}`,
         status: "COD_Pending",
         email: userInfo?.email,
-        shippingAddress: updatedAddress
       });
       await fetchOrderDetails();
     } catch (err) {
@@ -113,19 +102,18 @@ const OrderPaymentPage = () => {
   if (error) return <div className="text-center py-24 text-red-500 font-semibold">{error}</div>;
   if (!order) return <div className="text-center py-24 text-gray-500">Order context missing.</div>;
 
-  // FIX: Safe nested fallback names checking
-  const receiverName = userInfo?.shippingAddress?.firstName 
-    ? `${userInfo.shippingAddress.firstName} ${userInfo.shippingAddress?.lastName || ""}`.trim()
-    : order.shippingAddress?.firstName 
-      ? `${order.shippingAddress.firstName} ${order.shippingAddress?.lastName || ""}`.trim()
-      : userInfo?.name || "Customer Account";
+  const orderFirstName = order.shippingAddress?.firstName?.trim() || "";
+  const orderLastName = order.shippingAddress?.lastName?.trim() || "";
 
-  // FIX: Accessing fields from nested shippingAddress key inside userInfo slice safely
-  const displayAddress = userInfo?.shippingAddress?.address || order.shippingAddress.address;
-  const displayCity = userInfo?.shippingAddress?.city || order.shippingAddress.city;
-  const displayPostalCode = userInfo?.shippingAddress?.postalCode || order.shippingAddress.postalCode;
-  const displayCountry = userInfo?.shippingAddress?.country || order.shippingAddress.country;
-  const displayPhone = userInfo?.shippingAddress?.phone || order.shippingAddress.phone;
+  const receiverName = (orderFirstName || orderLastName)
+    ? `${orderFirstName} ${orderLastName}`.trim()
+    : userInfo?.name || "Customer Account";
+
+  const displayAddress = order.shippingAddress?.address || "";
+  const displayCity = order.shippingAddress?.city || "";
+  const displayPostalCode = order.shippingAddress?.postalCode || "";
+  const displayCountry = order.shippingAddress?.country || "";
+  const displayPhone = order.shippingAddress?.phone || "";
 
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-12 min-h-screen bg-gray-50/50">
@@ -138,7 +126,6 @@ const OrderPaymentPage = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
         
-        {/* ==================== LEFT PANEL ==================== */}
         <div className="lg:col-span-7 space-y-8">
           
           <div className="space-y-4">
@@ -147,8 +134,10 @@ const OrderPaymentPage = () => {
               <p className="text-sm font-bold text-gray-800">{receiverName}</p>
               
               <p className="text-sm text-gray-500 leading-relaxed font-normal">
-                {displayAddress}, {displayCity},{" "}
-                {displayPostalCode}, {displayCountry}
+                {displayAddress || "No physical address provided yet"}
+                {displayCity && `, ${displayCity}`}
+                {displayPostalCode && `, ${displayPostalCode}`}
+                {displayCountry && `, ${displayCountry}`}
               </p>
               
               {displayPhone && (
@@ -240,7 +229,6 @@ const OrderPaymentPage = () => {
           </div>
         </div>
 
-        {/* ==================== RIGHT PANEL ==================== */}
         <div className="lg:col-span-5 bg-gray-100/40 border border-gray-200/50 rounded-2xl p-6 md:p-8 space-y-8 lg:sticky lg:top-8">
           
           <div className="flex items-center gap-2 pb-4 border-b border-gray-200/60">
