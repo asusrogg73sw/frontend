@@ -17,10 +17,18 @@ interface CartState {
   cartItems: CartItem[]; // Items ki array, jo CartItem type ki hogi
 }
 
+// Pehle se saved userInfo nikalne ke liye taake guest/initial state set ho sake
+const savedUser = localStorage.getItem("userInfo") 
+  ? JSON.parse(localStorage.getItem("userInfo")!) 
+  : null;
+
+const getCartKey = (userId?: string) => userId ? `cartItems_${userId}` : "cartItems_guest";
+
 // NEW FIX: LocalStorage se safe data parsing taake runtime par parsing crash na ho
-const loadCartFromStorage = (): CartItem[] => {
+const loadCartFromStorage = (userId?: string): CartItem[] => {
   try {
-    const storedCart = localStorage.getItem("cartItems");
+    const key = getCartKey(userId);
+    const storedCart = localStorage.getItem(key);
     return storedCart ? (JSON.parse(storedCart) as CartItem[]) : [];
   } catch (error) {
     console.error("Failed to parse cart items from localStorage", error);
@@ -29,13 +37,18 @@ const loadCartFromStorage = (): CartItem[] => {
 };
 
 const initialState: CartState = {
-  cartItems: loadCartFromStorage(),
+  cartItems: loadCartFromStorage(savedUser?._id),
 };
 
 const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
+    // Naya Reducer: Login/Logout par cart data user ke mutabiq switch karne ke liye
+    initializeCart: (state, action: PayloadAction<string | undefined>) => {
+      state.cartItems = loadCartFromStorage(action.payload);
+    },
+
     // 1. Cart mein item add ya update karne ka function
     addToCart: (state, action: PayloadAction<CartItem>) => {
       const item = action.payload; // Jo naya item add karna hai
@@ -52,8 +65,10 @@ const cartSlice = createSlice({
         // Agar item naya hai, to cartItems array mein push (add) kar do
         state.cartItems.push(item);
       }
-      // Updated cart ko LocalStorage mein save kar rahe hain taake page refresh par data na urey
-      localStorage.setItem("cartItems", JSON.stringify(state.cartItems));
+
+      // Updated cart ko User Specific LocalStorage mein save kar rahe hain
+      const savedUser = localStorage.getItem("userInfo") ? JSON.parse(localStorage.getItem("userInfo")!) : null;
+      localStorage.setItem(getCartKey(savedUser?._id), JSON.stringify(state.cartItems));
     },
 
     // 2. Cart se item delete karne ka function
@@ -62,18 +77,20 @@ const cartSlice = createSlice({
         (x) => x.product !== action.payload,
       );
 
-      // Nayi list ko LocalStorage mein overwrite kar rahe hain
-      localStorage.setItem("cartItems", JSON.stringify(state.cartItems));
+      // Nayi list ko User Specific LocalStorage mein overwrite kar rahe hain
+      const savedUser = localStorage.getItem("userInfo") ? JSON.parse(localStorage.getItem("userInfo")!) : null;
+      localStorage.setItem(getCartKey(savedUser?._id), JSON.stringify(state.cartItems));
     },
 
     // 3. Poora cart khali karne ka function (e.g., Order complete hone ke baad)
     clearCart: (state) => {
       state.cartItems = []; // State khali kar di
-      localStorage.removeItem("cartItems"); // LocalStorage se data ura diya
+      const savedUser = localStorage.getItem("userInfo") ? JSON.parse(localStorage.getItem("userInfo")!) : null;
+      localStorage.removeItem(getCartKey(savedUser?._id)); // User specific data ura diya
     },
   },
 });
 
 // Actions aur Reducer ko export kar rahe hain taake store aur components mein use ho sakein
-export const { addToCart, removeFromCart, clearCart } = cartSlice.actions;
+export const { initializeCart, addToCart, removeFromCart, clearCart } = cartSlice.actions;
 export default cartSlice.reducer;

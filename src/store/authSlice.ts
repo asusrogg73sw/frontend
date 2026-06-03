@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 // FIX: Imported using 'import type' to respect verbatimModuleSyntax
 import type { PayloadAction } from "@reduxjs/toolkit";
 import API from "../api/axios";
+import { initializeCart } from "./cartSlice"; // Cart ko sync karne ke liye import kiya
 
 interface AddressState {
   country: string;
@@ -39,10 +40,14 @@ interface LoginCredentials {
 // 1. Login Action
 export const loginUser = createAsyncThunk(
   "auth/login",
-  async (userData: LoginCredentials, { rejectWithValue }) => {
+  async (userData: LoginCredentials, { dispatch, rejectWithValue }) => {
     try {
       const response = await API.post("/users/login", userData);
       localStorage.setItem("userInfo", JSON.stringify(response.data));
+      
+      // Login hotey hi naye user ki ID ke sath cart initialize karo
+      dispatch(initializeCart(response.data._id));
+      
       return response.data;
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
@@ -54,10 +59,13 @@ export const loginUser = createAsyncThunk(
 // 2. Logout Action
 export const logoutUser = createAsyncThunk(
   "auth/logout",
-  async (_, { rejectWithValue }) => {
+  async (_, { dispatch, rejectWithValue }) => {
     try {
       await API.post("/users/logout");
       localStorage.removeItem("userInfo");
+      
+      // Logout par cart ko default guest ya empty state par reset karo
+      dispatch(initializeCart(undefined));
     } catch { 
       return rejectWithValue("Logout failed");
     }
